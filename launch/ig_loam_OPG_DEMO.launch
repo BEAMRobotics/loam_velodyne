@@ -11,7 +11,7 @@
       <param name="scanPeriod" value="$(arg scanPeriod)" />
     </node>
 
-    <node pkg="loam_velodyne" type="laserOdometry" name="laserOdometry" output="screen" respawn="true">
+    <node pkg="loam_velodyne" type="laserOdometry" name="laserOdometry" output="screen" respawn="false">
       <param name="scanPeriod" value="$(arg scanPeriod)" />
     </node>
 
