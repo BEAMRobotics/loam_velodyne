@@ -40,7 +40,7 @@ namespace loam {
 
 
 
-bool ScanRegistration::parseParams(const ros::NodeHandle& nh, RegistrationParams& config_out)
+bool ScanRegistration::parseParams(const ros::NodeHandle& nh, RegistrationParams& config_out) 
 {
   bool success = true;
   int iParam = 0;
@@ -137,39 +137,6 @@ bool ScanRegistration::parseParams(const ros::NodeHandle& nh, RegistrationParams
     }
   }
 
-  std::string IMUFrame, lidarFrame;
-  ros::param::get("imu_frame", IMUFrame);
-  ros::param::get("lidar_frame", lidarFrame);
-  ros::param::get("transform_imu_data", _transformIMU);
-
-  // Get transformation to apply to IMU
-  if (_transformIMU) {
-    tf2_ros::Buffer tfBuffer;
-    tf2_ros::TransformListener tfListener(tfBuffer);
-    bool transform_found = false;
-    int counter = 0;
-    while(!transform_found){
-      transform_found = true;
-      counter++;
-      try {
-        _T_lidar_imu =
-            tfBuffer.lookupTransform(lidarFrame, IMUFrame, ros::Time(0));
-        transform_found = true;
-        ROS_INFO("Found IMU Lidar transform.");
-      } catch (tf2::TransformException &ex) {
-        transform_found = false;
-        ROS_INFO("%s", ex.what());
-        ROS_INFO("waiting for transform...");
-        ros::Duration(1.0).sleep();
-      }
-      if(counter > 10){
-        ROS_INFO("Cannot find transform from imu frame to lidar frame. Not transforming data.");
-        _transformIMU = false;
-        transform_found = true;
-      }
-    }
-  }
-
   return success;
 }
 
@@ -179,47 +146,35 @@ bool ScanRegistration::setupROS(ros::NodeHandle& node, ros::NodeHandle& privateN
     return false;
 
   // subscribe to IMU topic
-  std::string imuInputTopic;
-  ros::param::get("imu_input_topic", imuInputTopic);
-  _subImu = node.subscribe<sensor_msgs::Imu>(imuInputTopic, 50, &ScanRegistration::handleIMUMessage, this);
+  _subImu = node.subscribe<sensor_msgs::Imu>("/imu/data", 50, &ScanRegistration::handleIMUMessage, this);
 
   // advertise scan registration topics
-  _pubLaserCloud            = node.advertise<sensor_msgs::PointCloud2>("velodyne_cloud_2", 2);
-  _pubCornerPointsSharp     = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_sharp", 2);
-  _pubCornerPointsLessSharp = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_less_sharp", 2);
-  _pubSurfPointsFlat        = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_flat", 2);
-  _pubSurfPointsLessFlat    = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_less_flat", 2);
-  _pubImuTrans              = node.advertise<sensor_msgs::PointCloud2>("imu_trans", 5);
+  _pubLaserCloud            = node.advertise<sensor_msgs::PointCloud2>("/velodyne_cloud_2", 2);
+  _pubCornerPointsSharp     = node.advertise<sensor_msgs::PointCloud2>("/laser_cloud_sharp", 2);
+  _pubCornerPointsLessSharp = node.advertise<sensor_msgs::PointCloud2>("/laser_cloud_less_sharp", 2);
+  _pubSurfPointsFlat        = node.advertise<sensor_msgs::PointCloud2>("/laser_cloud_flat", 2);
+  _pubSurfPointsLessFlat    = node.advertise<sensor_msgs::PointCloud2>("/laser_cloud_less_flat", 2);
+  _pubImuTrans              = node.advertise<sensor_msgs::PointCloud2>("/imu_trans", 5);
 
   return true;
 }
 
+
+
 void ScanRegistration::handleIMUMessage(const sensor_msgs::Imu::ConstPtr& imuIn)
 {
-  // rotate IMU data to lidar frame
-  sensor_msgs::Imu::Ptr imuInRotated;
-  if(_transformIMU){
-    imuInRotated = boost::make_shared<sensor_msgs::Imu>();
-    transformIMU(*imuIn, *imuInRotated, _T_lidar_imu);
-  } else {
-    imuInRotated = boost::make_shared<sensor_msgs::Imu>(*imuIn);
-  }
-
-  // Output imu data:
-  // std::cout << "IMU Rotated: \n" << *imuInRotated << "\n";
-
   tf::Quaternion orientation;
-  tf::quaternionMsgToTF(imuInRotated->orientation, orientation);
+  tf::quaternionMsgToTF(imuIn->orientation, orientation);
   double roll, pitch, yaw;
   tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
   Vector3 acc;
-  acc.x() = float(imuInRotated->linear_acceleration.y - sin(roll) * cos(pitch) * 9.81);
-  acc.y() = float(imuInRotated->linear_acceleration.z - cos(roll) * cos(pitch) * 9.81);
-  acc.z() = float(imuInRotated->linear_acceleration.x + sin(pitch)             * 9.81);
+  acc.x() = float(imuIn->linear_acceleration.y - sin(roll) * cos(pitch) * 9.81);
+  acc.y() = float(imuIn->linear_acceleration.z - cos(roll) * cos(pitch) * 9.81);
+  acc.z() = float(imuIn->linear_acceleration.x + sin(pitch)             * 9.81);
 
   IMUState newState;
-  newState.stamp = fromROSTime( imuInRotated->header.stamp);
+  newState.stamp = fromROSTime( imuIn->header.stamp);
   newState.roll = roll;
   newState.pitch = pitch;
   newState.yaw = yaw;
@@ -228,21 +183,19 @@ void ScanRegistration::handleIMUMessage(const sensor_msgs::Imu::ConstPtr& imuIn)
   updateIMUData(acc, newState);
 }
 
+
 void ScanRegistration::publishResult()
 {
-  std::string lidarFrame;
-  ros::param::get("lidar_frame", lidarFrame);
-
   auto sweepStartTime = toROSTime(sweepStart());
   // publish full resolution and feature point clouds
-  publishCloudMsg(_pubLaserCloud, laserCloud(), sweepStartTime, lidarFrame);
-  publishCloudMsg(_pubCornerPointsSharp, cornerPointsSharp(), sweepStartTime, lidarFrame);
-  publishCloudMsg(_pubCornerPointsLessSharp, cornerPointsLessSharp(), sweepStartTime, lidarFrame);
-  publishCloudMsg(_pubSurfPointsFlat, surfacePointsFlat(), sweepStartTime, lidarFrame);
-  publishCloudMsg(_pubSurfPointsLessFlat, surfacePointsLessFlat(), sweepStartTime, lidarFrame);
+  publishCloudMsg(_pubLaserCloud, laserCloud(), sweepStartTime, "/camera");
+  publishCloudMsg(_pubCornerPointsSharp, cornerPointsSharp(), sweepStartTime, "/camera");
+  publishCloudMsg(_pubCornerPointsLessSharp, cornerPointsLessSharp(), sweepStartTime, "/camera");
+  publishCloudMsg(_pubSurfPointsFlat, surfacePointsFlat(), sweepStartTime, "/camera");
+  publishCloudMsg(_pubSurfPointsLessFlat, surfacePointsLessFlat(), sweepStartTime, "/camera");
 
   // publish corresponding IMU transformation information
-  publishCloudMsg(_pubImuTrans, imuTransform(), sweepStartTime, lidarFrame);
+  publishCloudMsg(_pubImuTrans, imuTransform(), sweepStartTime, "/camera");
 }
 
 } // end namespace loam
