@@ -120,7 +120,7 @@ private:
    bool _newLaserCloudSurfLast;    ///< flag if a new last surface cloud has been received
    bool _newLaserCloudFullRes;     ///< flag if a new full resolution cloud has been received
    bool _newLaserOdometry;         ///< flag if a new laser odometry has been received
-
+   bool _outputTransforms;          //< whether or not to publish transforms to tf
 
    nav_msgs::Odometry _odomAftMapped;      ///< mapping odometry message
    tf::StampedTransform _aftMappedTrans;   ///< mapping odometry transformation
@@ -135,6 +135,9 @@ private:
    ros::Subscriber _subLaserCloudFullRes;      ///< full resolution cloud message subscriber
    ros::Subscriber _subLaserOdometry;          ///< laser odometry message subscriber
    ros::Subscriber _subImu;                    ///< IMU message subscriber
+
+   std::string _mapOdomTopic, _initFrame, _mapFrame, _loamOdomTopic,
+               _imuInputTopic;
 };
 
 } // end namespace loam

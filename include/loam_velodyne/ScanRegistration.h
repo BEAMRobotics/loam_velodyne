@@ -95,6 +95,7 @@ namespace loam
     ros::Publisher _pubSurfPointsFlat;          ///< flat surface cloud message publisher
     ros::Publisher _pubSurfPointsLessFlat;      ///< less flat surface cloud message publisher
     ros::Publisher _pubImuTrans;                ///< IMU transformation message publisher
+    std::string _lidarFrame, _imuFrame;
   };
 
 } // end namespace loam

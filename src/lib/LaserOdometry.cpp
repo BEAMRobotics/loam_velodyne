@@ -52,15 +52,18 @@ namespace loam
     BasicLaserOdometry(scanPeriod, maxIterations),
     _ioRatio(ioRatio)
   {
-    std::string initFrame, odomFrame;
-    ros::param::get("init_frame", initFrame);
-    ros::param::get("odom_frame", odomFrame);
-    // initialize odometry and odometry tf messages
-    _laserOdometryMsg.header.frame_id = initFrame;
-    _laserOdometryMsg.child_frame_id  = odomFrame;
+    _initFrame = "/camera_init";
+    _odomFrame = "/laser_odom";
+    _loamOdomTopic = "/laser_odom_to_init";
+    _lidarFrame = "/camera";
+    _outputTransforms = true;
 
-    _laserOdometryTrans.frame_id_       = initFrame;
-    _laserOdometryTrans.child_frame_id_ = odomFrame;
+    // initialize odometry and odometry tf messages
+    _laserOdometryMsg.header.frame_id = _initFrame;
+    _laserOdometryMsg.child_frame_id  = _odomFrame;
+
+    _laserOdometryTrans.frame_id_       = _initFrame;
+    _laserOdometryTrans.child_frame_id_ = _odomFrame;
   }
 
 
@@ -69,6 +72,8 @@ namespace loam
     // fetch laser odometry params
     float fParam;
     int iParam;
+    bool bParam;
+    std::string sParam;
 
     if (privateNode.getParam("scanPeriod", fParam))
     {
@@ -88,7 +93,7 @@ namespace loam
     {
       if (iParam < 1)
       {
-        ROS_ERROR("Invalid ioRatio parameter: %d (expected > 0)", iParam);
+        ROS_ERROR("Invalid ioRatio parameter: %d (expected >= 1)", iParam);
         return false;
       }
       else
@@ -98,55 +103,82 @@ namespace loam
       }
     }
 
-    if (privateNode.getParam("maxIterations", iParam))
+    if (privateNode.getParam("maxIterationsOdom", iParam))
     {
       if (iParam < 1)
       {
-        ROS_ERROR("Invalid maxIterations parameter: %d (expected > 0)", iParam);
+        ROS_ERROR("Invalid maxIterationsOdom parameter: %d (expected >= 1)", iParam);
         return false;
       }
       else
       {
         setMaxIterations(iParam);
-        ROS_INFO("Set maxIterations: %d", iParam);
+        ROS_INFO("Set maxIterationsOdom: %d", iParam);
       }
     }
 
-    if (privateNode.getParam("deltaTAbort", fParam))
+    if (privateNode.getParam("deltaTAbortOdom", fParam))
     {
       if (fParam <= 0)
       {
-        ROS_ERROR("Invalid deltaTAbort parameter: %f (expected > 0)", fParam);
+        ROS_ERROR("Invalid deltaTAbortOdom parameter: %f (expected > 0)", fParam);
         return false;
       }
       else
       {
         setDeltaTAbort(fParam);
-        ROS_INFO("Set deltaTAbort: %g", fParam);
+        ROS_INFO("Set deltaTAbortOdom: %g", fParam);
       }
     }
 
-    if (privateNode.getParam("deltaRAbort", fParam))
+    if (privateNode.getParam("deltaRAbortOdom", fParam))
     {
       if (fParam <= 0)
       {
-        ROS_ERROR("Invalid deltaRAbort parameter: %f (expected > 0)", fParam);
+        ROS_ERROR("Invalid deltaRAbortOdom parameter: %f (expected > 0)", fParam);
         return false;
       }
       else
       {
         setDeltaRAbort(fParam);
-        ROS_INFO("Set deltaRAbort: %g", fParam);
+        ROS_INFO("Set deltaRAbortOdom: %g", fParam);
       }
     }
 
+    if (privateNode.getParam("initFrame", sParam)) {
+      _initFrame = sParam;
+      _laserOdometryMsg.header.frame_id = _initFrame;
+      _laserOdometryTrans.frame_id_ = _initFrame;
+      ROS_INFO("Set initial frame name to: %s", sParam.c_str());
+    }
+
+    if (privateNode.getParam("odomFrame", sParam)) {
+      _odomFrame = sParam;
+      _laserOdometryMsg.child_frame_id  = _odomFrame;
+      _laserOdometryTrans.child_frame_id_ = _odomFrame;
+      ROS_INFO("Set odometry frame name to: %s", sParam.c_str());
+    }
+
+    if (privateNode.getParam("loamOdomTopic", sParam)) {
+      _loamOdomTopic = sParam;
+      ROS_INFO("Set loam odometry topic name to: %s", sParam.c_str());
+    }
+
+    if (privateNode.getParam("lidarFrame", sParam)) {
+      _lidarFrame = sParam;
+      ROS_INFO("Set lidar frame name to: %s", sParam.c_str());
+    }
+
+    if (privateNode.getParam("outputTransforms", bParam)) {
+      _outputTransforms = bParam;
+      ROS_INFO("Set outputTransforms param to: %f", bParam);
+    }
+
     // advertise laser odometry topics
-    std::string loamOdomTopic;
-    ros::param::get("loam_odom_topic", loamOdomTopic);
     _pubLaserCloudCornerLast = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_corner_last", 2);
     _pubLaserCloudSurfLast = node.advertise<sensor_msgs::PointCloud2>("laser_cloud_surf_last", 2);
     _pubLaserCloudFullRes = node.advertise<sensor_msgs::PointCloud2>("velodyne_cloud_3", 2);
-    _pubLaserOdometry = node.advertise<nav_msgs::Odometry>(loamOdomTopic, 5);
+    _pubLaserOdometry = node.advertise<nav_msgs::Odometry>(_loamOdomTopic, 5);
 
     // subscribe to scan registration topics
     _subCornerPointsSharp = node.subscribe<sensor_msgs::PointCloud2>
@@ -301,11 +333,7 @@ namespace loam
     _laserOdometryMsg.pose.pose.position.z    = transformSum().pos.z();
     _pubLaserOdometry.publish(_laserOdometryMsg);
 
-    bool outputTransform;
-    std::string lidarFrame;
-    ros::param::get("output_transforms", outputTransform);
-    ros::param::get("lidar_frame", lidarFrame);
-    if(outputTransform){
+    if(_outputTransforms){
     _laserOdometryTrans.stamp_ = _timeSurfPointsLessFlat;
     _laserOdometryTrans.setRotation(tf::Quaternion(-geoQuat.y, -geoQuat.z, geoQuat.x, geoQuat.w));
     _laserOdometryTrans.setOrigin(tf::Vector3(transformSum().pos.x(), transformSum().pos.y(), transformSum().pos.z()));
@@ -316,11 +344,11 @@ namespace loam
     if (_ioRatio < 2 || frameCount() % _ioRatio == 1)
     {
       ros::Time sweepTime = _timeSurfPointsLessFlat;
-      publishCloudMsg(_pubLaserCloudCornerLast, *lastCornerCloud(), sweepTime, lidarFrame);
-      publishCloudMsg(_pubLaserCloudSurfLast, *lastSurfaceCloud(), sweepTime, lidarFrame);
+      publishCloudMsg(_pubLaserCloudCornerLast, *lastCornerCloud(), sweepTime, _lidarFrame);
+      publishCloudMsg(_pubLaserCloudSurfLast, *lastSurfaceCloud(), sweepTime, _lidarFrame);
 
       transformToEnd(laserCloud());  // transform full resolution cloud to sweep end before sending it
-      publishCloudMsg(_pubLaserCloudFullRes, *laserCloud(), sweepTime, lidarFrame);
+      publishCloudMsg(_pubLaserCloudFullRes, *laserCloud(), sweepTime, _lidarFrame);
     }
   }
 

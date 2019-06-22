@@ -36,8 +36,8 @@ namespace loam {
 
 TransformMaintenance::TransformMaintenance() {
   std::string initFrame, lidarFrame;
-  ros::param::get("init_frame", initFrame);
-  ros::param::get("lidar_frame", lidarFrame);
+  ros::param::get("initFrame", initFrame);
+  ros::param::get("lidarFrame", lidarFrame);
 
   // initialize odometry and odometry tf messages
   _laserOdometry2.header.frame_id = initFrame;
@@ -50,9 +50,9 @@ TransformMaintenance::TransformMaintenance() {
 bool TransformMaintenance::setup(ros::NodeHandle &node,
                                  ros::NodeHandle &privateNode) {
   std::string mapOdomTopic, loamOdomTopic, lidarOdomTopic;
-  ros::param::get("map_odom_topic", mapOdomTopic);
-  ros::param::get("loam_odom_topic", loamOdomTopic);
-  ros::param::get("lidar_odom_topic", lidarOdomTopic);
+  ros::param::get("mapOdomTopic", mapOdomTopic);
+  ros::param::get("loamOdomTopic", loamOdomTopic);
+  ros::param::get("lidarOdomTopic", lidarOdomTopic);
 
   // advertise integrated laser odometry topic
   _pubLaserOdometry2 = node.advertise<nav_msgs::Odometry>(lidarOdomTopic, 5);
@@ -84,7 +84,7 @@ void TransformMaintenance::laserOdometryHandler(
       transformMapped()[2], -transformMapped()[0], -transformMapped()[1]);
 
   std::vector<double> pose_covariance(6, 0);
-  ros::param::get("lidar_odom_cov", pose_covariance);
+  ros::param::get("lidarOdomCov", pose_covariance);
   _laserOdometry2.header.stamp = laserOdometry->header.stamp;
   _laserOdometry2.pose.pose.orientation.x = -geoQuat.y;
   _laserOdometry2.pose.pose.orientation.y = -geoQuat.z;
@@ -102,7 +102,7 @@ void TransformMaintenance::laserOdometryHandler(
   _pubLaserOdometry2.publish(_laserOdometry2);
 
   bool outputTransform;
-  ros::param::get("output_transforms", outputTransform);
+  ros::param::get("outputTransforms", outputTransform);
   if (outputTransform) {
     _laserOdometryTrans2.stamp_ = laserOdometry->header.stamp;
     _laserOdometryTrans2.setRotation(

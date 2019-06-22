@@ -133,7 +133,7 @@ bool MultiScanRegistration::setupROS(ros::NodeHandle& node, ros::NodeHandle& pri
 
   // subscribe to input cloud topic
   std::string pointCloudInputTopic;
-  ros::param::get("point_cloud_input_topic", pointCloudInputTopic);
+  ros::param::get("pointCloudInputTopic", pointCloudInputTopic);
   _subLaserCloud = node.subscribe<sensor_msgs::PointCloud2>
       (pointCloudInputTopic, 2, &MultiScanRegistration::handleCloudMessage, this);
 
