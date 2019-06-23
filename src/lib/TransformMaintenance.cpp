@@ -35,34 +35,62 @@
 namespace loam {
 
 TransformMaintenance::TransformMaintenance() {
-  std::string initFrame, lidarFrame;
-  ros::param::get("initFrame", initFrame);
-  ros::param::get("lidarFrame", lidarFrame);
+  _mapOdomTopic = "/aft_mapped_to_init";
+  _loamOdomTopic = "/laser_odom_to_init";
+  _lidarOdomTopic = "/integrated_to_init";
+  _lidarFrame = "/camera";
+  _initFrame = "/camera_init";
 
-  // initialize odometry and odometry tf messages
-  _laserOdometry2.header.frame_id = initFrame;
-  _laserOdometry2.child_frame_id = lidarFrame;
+  // initialize odometry and odometry tf messages.
+  _laserOdometry2.header.frame_id = _initFrame;
+  _laserOdometry2.child_frame_id = _lidarFrame;
 
-  _laserOdometryTrans2.frame_id_ = initFrame;
-  _laserOdometryTrans2.child_frame_id_ = lidarFrame;
+  _laserOdometryTrans2.frame_id_ = _initFrame;
+  _laserOdometryTrans2.child_frame_id_ = _lidarFrame;
 }
 
 bool TransformMaintenance::setup(ros::NodeHandle &node,
                                  ros::NodeHandle &privateNode) {
-  std::string mapOdomTopic, loamOdomTopic, lidarOdomTopic;
-  ros::param::get("mapOdomTopic", mapOdomTopic);
-  ros::param::get("loamOdomTopic", loamOdomTopic);
-  ros::param::get("lidarOdomTopic", lidarOdomTopic);
+
+  std::string sParam;
+  if (privateNode.getParam("loamOdomTopic", sParam)) {
+    _loamOdomTopic = sParam;
+    ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
+  }
+
+  if (privateNode.getParam("mapOdomTopic", sParam)) {
+    _mapOdomTopic = sParam;
+    ROS_DEBUG("Set map odometry topic name to: %s", sParam.c_str());
+  }
+
+  if (privateNode.getParam("lidarOdomTopic", sParam)) {
+    _lidarOdomTopic = sParam;
+    ROS_DEBUG("Set lidar odometry topic name to: %s", sParam.c_str());
+  }
+
+  if (privateNode.getParam("initFrame", sParam)) {
+    _initFrame = sParam;
+    _laserOdometry2.header.frame_id = _initFrame;
+    _laserOdometryTrans2.frame_id_ = _initFrame;
+    ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
+  }
+
+  if (privateNode.getParam("lidarFrame", sParam)) {
+    _lidarFrame = sParam;
+    _laserOdometry2.child_frame_id = _lidarFrame;
+    _laserOdometryTrans2.child_frame_id_ = _lidarFrame;
+    ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
+  }
 
   // advertise integrated laser odometry topic
-  _pubLaserOdometry2 = node.advertise<nav_msgs::Odometry>(lidarOdomTopic, 5);
+  _pubLaserOdometry2 = node.advertise<nav_msgs::Odometry>(_lidarOdomTopic, 5);
 
   // subscribe to laser odometry and mapping odometry topics
   _subLaserOdometry = node.subscribe<nav_msgs::Odometry>(
-      loamOdomTopic, 5, &TransformMaintenance::laserOdometryHandler, this);
+      _loamOdomTopic, 5, &TransformMaintenance::laserOdometryHandler, this);
 
   _subOdomAftMapped = node.subscribe<nav_msgs::Odometry>(
-      mapOdomTopic, 5, &TransformMaintenance::odomAftMappedHandler, this);
+      _mapOdomTopic, 5, &TransformMaintenance::odomAftMappedHandler, this);
 
   return true;
 }

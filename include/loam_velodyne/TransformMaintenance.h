@@ -77,6 +77,9 @@ private:
 
   ros::Subscriber _subLaserOdometry;    ///< (high frequency) laser odometry subscriber
   ros::Subscriber _subOdomAftMapped;    ///< (low frequency) mapping odometry subscriber
+
+  std::string _mapOdomTopic, _loamOdomTopic, _lidarOdomTopic, _lidarFrame,
+              _initFrame;
 };
 
 } // end namespace loam
