@@ -51,7 +51,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.scanPeriod = fParam;
-      ROS_INFO("Set scanPeriod: %g", fParam);
+      ROS_DEBUG("Set scanPeriod: %g", fParam);
     }
   }
 
@@ -61,7 +61,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.imuHistorySize = iParam;
-      ROS_INFO("Set imuHistorySize: %d", iParam);
+      ROS_DEBUG("Set imuHistorySize: %d", iParam);
     }
   }
 
@@ -71,7 +71,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.nFeatureRegions = iParam;
-      ROS_INFO("Set nFeatureRegions: %d", iParam);
+      ROS_DEBUG("Set nFeatureRegions: %d", iParam);
     }
   }
 
@@ -93,7 +93,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     } else {
       config_out.maxCornerSharp = iParam;
       config_out.maxCornerLessSharp = 10 * iParam;
-      ROS_INFO("Set maxCornerSharp / less sharp: %d / %d", iParam,
+      ROS_DEBUG("Set maxCornerSharp / less sharp: %d / %d", iParam,
                config_out.maxCornerLessSharp);
     }
   }
@@ -105,7 +105,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.maxCornerLessSharp = iParam;
-      ROS_INFO("Set maxCornerLessSharp: %d", iParam);
+      ROS_DEBUG("Set maxCornerLessSharp: %d", iParam);
     }
   }
 
@@ -115,7 +115,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.maxSurfaceFlat = iParam;
-      ROS_INFO("Set maxSurfaceFlat: %d", iParam);
+      ROS_DEBUG("Set maxSurfaceFlat: %d", iParam);
     }
   }
 
@@ -127,7 +127,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.surfaceCurvatureThreshold = fParam;
-      ROS_INFO("Set surfaceCurvatureThreshold: %g", fParam);
+      ROS_DEBUG("Set surfaceCurvatureThreshold: %g", fParam);
     }
   }
 
@@ -138,23 +138,23 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       success = false;
     } else {
       config_out.lessFlatFilterSize = fParam;
-      ROS_INFO("Set lessFlatFilterSize: %g", fParam);
+      ROS_DEBUG("Set lessFlatFilterSize: %g", fParam);
     }
   }
 
   if (nh.getParam("lidarFrame", sParam)) {
     _lidarFrame = sParam;
-    ROS_INFO("Set lidar frame name to: %s", sParam.c_str());
+    ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
   }
 
   if (nh.getParam("imuFrame", sParam)) {
     _imuFrame = sParam;
-    ROS_INFO("Set IMU frame name to: %s", sParam.c_str());
+    ROS_DEBUG("Set IMU frame name to: %s", sParam.c_str());
   }
 
   if (nh.getParam("transformImuData", bParam)) {
     _transformIMU = bParam;
-    ROS_INFO("Set IMU frame name to: %d", bParam);
+    ROS_DEBUG("Set IMU frame name to: %d", bParam);
   }
 
   // Get transformation to apply to IMU
@@ -178,7 +178,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
         ros::Duration(1.0).sleep();
       }
       if (counter > 10) {
-        ROS_INFO("Cannot find transform from imu frame to lidar frame. Not "
+        ROS_ERROR("Cannot find transform from imu frame to lidar frame. Not "
                  "transforming data.");
         _transformIMU = false;
         transform_found = true;

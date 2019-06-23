@@ -85,7 +85,7 @@ namespace loam
       else
       {
         setScanPeriod(fParam);
-        ROS_INFO("Set scanPeriod: %g", fParam);
+        ROS_DEBUG("Set scanPeriod: %g", fParam);
       }
     }
 
@@ -99,7 +99,7 @@ namespace loam
       else
       {
         _ioRatio = iParam;
-        ROS_INFO("Set ioRatio: %d", iParam);
+        ROS_DEBUG("Set ioRatio: %d", iParam);
       }
     }
 
@@ -113,7 +113,7 @@ namespace loam
       else
       {
         setMaxIterations(iParam);
-        ROS_INFO("Set maxIterationsOdom: %d", iParam);
+        ROS_DEBUG("Set maxIterationsOdom: %d", iParam);
       }
     }
 
@@ -127,7 +127,7 @@ namespace loam
       else
       {
         setDeltaTAbort(fParam);
-        ROS_INFO("Set deltaTAbortOdom: %g", fParam);
+        ROS_DEBUG("Set deltaTAbortOdom: %g", fParam);
       }
     }
 
@@ -141,7 +141,7 @@ namespace loam
       else
       {
         setDeltaRAbort(fParam);
-        ROS_INFO("Set deltaRAbortOdom: %g", fParam);
+        ROS_DEBUG("Set deltaRAbortOdom: %g", fParam);
       }
     }
 
@@ -149,29 +149,29 @@ namespace loam
       _initFrame = sParam;
       _laserOdometryMsg.header.frame_id = _initFrame;
       _laserOdometryTrans.frame_id_ = _initFrame;
-      ROS_INFO("Set initial frame name to: %s", sParam.c_str());
+      ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
     }
 
     if (privateNode.getParam("odomFrame", sParam)) {
       _odomFrame = sParam;
       _laserOdometryMsg.child_frame_id  = _odomFrame;
       _laserOdometryTrans.child_frame_id_ = _odomFrame;
-      ROS_INFO("Set odometry frame name to: %s", sParam.c_str());
+      ROS_DEBUG("Set odometry frame name to: %s", sParam.c_str());
     }
 
     if (privateNode.getParam("loamOdomTopic", sParam)) {
       _loamOdomTopic = sParam;
-      ROS_INFO("Set loam odometry topic name to: %s", sParam.c_str());
+      ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
     }
 
     if (privateNode.getParam("lidarFrame", sParam)) {
       _lidarFrame = sParam;
-      ROS_INFO("Set lidar frame name to: %s", sParam.c_str());
+      ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
     }
 
     if (privateNode.getParam("outputTransforms", bParam)) {
       _outputTransforms = bParam;
-      ROS_INFO("Set outputTransforms param to: %f", bParam);
+      ROS_DEBUG("Set outputTransforms param to: %f", bParam);
     }
 
     // advertise laser odometry topics

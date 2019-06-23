@@ -65,7 +65,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       setScanPeriod(fParam);
-      ROS_INFO("Set scanPeriod: %g", fParam);
+      ROS_DEBUG("Set scanPeriod: %g", fParam);
     }
   }
 
@@ -75,7 +75,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       setMaxIterations(iParam);
-      ROS_INFO("Set maxIterationsMapping: %d", iParam);
+      ROS_DEBUG("Set maxIterationsMapping: %d", iParam);
     }
   }
 
@@ -85,7 +85,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       setDeltaTAbort(fParam);
-      ROS_INFO("Set deltaTAbortMapping: %g", fParam);
+      ROS_DEBUG("Set deltaTAbortMapping: %g", fParam);
     }
   }
 
@@ -95,7 +95,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       setDeltaRAbort(fParam);
-      ROS_INFO("Set deltaRAbortMapping: %g", fParam);
+      ROS_DEBUG("Set deltaRAbortMapping: %g", fParam);
     }
   }
 
@@ -106,7 +106,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       downSizeFilterCorner().setLeafSize(fParam, fParam, fParam);
-      ROS_INFO("Set corner down size filter leaf size: %g", fParam);
+      ROS_DEBUG("Set corner down size filter leaf size: %g", fParam);
     }
   }
 
@@ -117,53 +117,53 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
       return false;
     } else {
       downSizeFilterSurf().setLeafSize(fParam, fParam, fParam);
-      ROS_INFO("Set surface down size filter leaf size: %g", fParam);
+      ROS_DEBUG("Set surface down size filter leaf size: %g", fParam);
     }
   }
 
   if (privateNode.getParam("mapFilterSize", fParam)) {
     if (fParam < 0.001) {
-      ROS_INFO("Invalid mapFilterSize parameter: %f (expected >= 0.001)",
+      ROS_DEBUG("Invalid mapFilterSize parameter: %f (expected >= 0.001)",
                 fParam);
       return false;
     } else {
       downSizeFilterMap().setLeafSize(fParam, fParam, fParam);
-      ROS_INFO("Set map down size filter leaf size: %f", fParam);
+      ROS_DEBUG("Set map down size filter leaf size: %f", fParam);
     }
   }
 
   if (privateNode.getParam("mapOdomTopic", sParam)) {
     _mapOdomTopic = sParam;
-    ROS_INFO("Set map odometry topic to: %s", sParam.c_str());
+    ROS_DEBUG("Set map odometry topic to: %s", sParam.c_str());
   }
 
   if (privateNode.getParam("initFrame", sParam)) {
     _initFrame = sParam;
     _odomAftMapped.header.frame_id = _initFrame;
     _aftMappedTrans.frame_id_ = _initFrame;
-    ROS_INFO("Set initial frame name to: %s", sParam.c_str());
+    ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
   }
 
   if (privateNode.getParam("mapFrame", sParam)) {
     _mapFrame = sParam;
     _odomAftMapped.child_frame_id = _mapFrame;
     _aftMappedTrans.child_frame_id_ = _mapFrame;
-    ROS_INFO("Set map frame name to: %s", sParam.c_str());
+    ROS_DEBUG("Set map frame name to: %s", sParam.c_str());
   }
 
   if (privateNode.getParam("loamOdomTopic", sParam)) {
-    _mapFrame = sParam;
-    ROS_INFO("Set loam odometry topic name to: %s", sParam.c_str());
+    _loamOdomTopic = sParam;
+    ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
   }
 
   if (privateNode.getParam("imuInputTopic", sParam)) {
     _imuInputTopic = sParam;
-    ROS_INFO("Set IMU input topic name to: %s", sParam.c_str());
+    ROS_DEBUG("Set IMU input topic name to: %s", sParam.c_str());
   }
 
   if (privateNode.getParam("outputTransforms", bParam)) {
     _outputTransforms = bParam;
-    ROS_INFO("Set outputTransforms to: %d", bParam);
+    ROS_DEBUG("Set outputTransforms to: %d", bParam);
   }
 
   // advertise laser mapping topics
