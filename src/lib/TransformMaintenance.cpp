@@ -40,6 +40,7 @@ TransformMaintenance::TransformMaintenance() {
   _lidarOdomTopic = "/integrated_to_init";
   _lidarFrame = "/camera";
   _initFrame = "/camera_init";
+  _outputTransforms = true;
 
   // initialize odometry and odometry tf messages.
   _laserOdometry2.header.frame_id = _initFrame;
@@ -53,6 +54,8 @@ bool TransformMaintenance::setup(ros::NodeHandle &node,
                                  ros::NodeHandle &privateNode) {
 
   std::string sParam;
+  bool bParam;
+  std::vector<double> vParam;
   if (privateNode.getParam("loamOdomTopic", sParam)) {
     _loamOdomTopic = sParam;
     ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
@@ -80,6 +83,25 @@ bool TransformMaintenance::setup(ros::NodeHandle &node,
     _laserOdometry2.child_frame_id = _lidarFrame;
     _laserOdometryTrans2.child_frame_id_ = _lidarFrame;
     ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
+  }
+
+  if (privateNode.getParam("lidarOdomCov", vParam)) {
+    if (vParam.size() == 6) {
+      _poseCovariance = vParam;
+      ROS_DEBUG("Set lidar odometry covariance diagonals to: [%f, %f, %f, %f, "
+                "%f, %f] ",
+                vParam[0], vParam[1], vParam[2], vParam[3], vParam[4],
+                vParam[5]);
+    } else {
+      ROS_ERROR(
+          "Invalid lidarOdomCov parameter. Requires vector of dimension 6.");
+      return false;
+    }
+  }
+
+  if (privateNode.getParam("outputTransforms", bParam)) {
+    _outputTransforms = bParam;
+    ROS_DEBUG("Set outputTransforms param to: %d", bParam);
   }
 
   // advertise integrated laser odometry topic
@@ -111,8 +133,6 @@ void TransformMaintenance::laserOdometryHandler(
   geoQuat = tf::createQuaternionMsgFromRollPitchYaw(
       transformMapped()[2], -transformMapped()[0], -transformMapped()[1]);
 
-  std::vector<double> pose_covariance(6, 0);
-  ros::param::get("lidarOdomCov", pose_covariance);
   _laserOdometry2.header.stamp = laserOdometry->header.stamp;
   _laserOdometry2.pose.pose.orientation.x = -geoQuat.y;
   _laserOdometry2.pose.pose.orientation.y = -geoQuat.z;
@@ -121,17 +141,15 @@ void TransformMaintenance::laserOdometryHandler(
   _laserOdometry2.pose.pose.position.x = transformMapped()[3];
   _laserOdometry2.pose.pose.position.y = transformMapped()[4];
   _laserOdometry2.pose.pose.position.z = transformMapped()[5];
-  _laserOdometry2.pose.covariance[0] = pose_covariance[0];
-  _laserOdometry2.pose.covariance[7] = pose_covariance[1];
-  _laserOdometry2.pose.covariance[14] = pose_covariance[2];
-  _laserOdometry2.pose.covariance[21] = pose_covariance[3];
-  _laserOdometry2.pose.covariance[28] = pose_covariance[4];
-  _laserOdometry2.pose.covariance[35] = pose_covariance[5];
+  _laserOdometry2.pose.covariance[0] = _poseCovariance[0];
+  _laserOdometry2.pose.covariance[7] = _poseCovariance[1];
+  _laserOdometry2.pose.covariance[14] = _poseCovariance[2];
+  _laserOdometry2.pose.covariance[21] = _poseCovariance[3];
+  _laserOdometry2.pose.covariance[28] = _poseCovariance[4];
+  _laserOdometry2.pose.covariance[35] = _poseCovariance[5];
   _pubLaserOdometry2.publish(_laserOdometry2);
 
-  bool outputTransform;
-  ros::param::get("outputTransforms", outputTransform);
-  if (outputTransform) {
+  if (_outputTransforms) {
     _laserOdometryTrans2.stamp_ = laserOdometry->header.stamp;
     _laserOdometryTrans2.setRotation(
         tf::Quaternion(-geoQuat.y, -geoQuat.z, geoQuat.x, geoQuat.w));

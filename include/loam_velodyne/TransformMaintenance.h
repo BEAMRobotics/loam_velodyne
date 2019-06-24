@@ -80,6 +80,9 @@ private:
 
   std::string _mapOdomTopic, _loamOdomTopic, _lidarOdomTopic, _lidarFrame,
               _initFrame;
+
+  bool _outputTransforms;
+  std::vector<double> _poseCovariance;
 };
 
 } // end namespace loam

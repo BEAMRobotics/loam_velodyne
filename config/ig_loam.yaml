@@ -44,5 +44,3 @@ maxCornerLessSharp: 20 # Expected int >= maxCornerSharp. Default: 10 times maxCo
 maxSurfaceFlat: 4 # Expected int >=1, default: 4. The maximum number of flat surface points per feature region.
 surfaceCurvatureThreshold: 0.1 # Expected >= 0.001, default: 0.1. The curvature threshold below / above a point is considered a flat / corner point.
 lessFlatFilterSize: 0.2 # Expected >= 0.001, default: 0.2. The voxel size used for down sizing the remaining less flat surface points.
-
-# TransformMainenance

@@ -171,7 +171,7 @@ namespace loam
 
     if (privateNode.getParam("outputTransforms", bParam)) {
       _outputTransforms = bParam;
-      ROS_DEBUG("Set outputTransforms param to: %f", bParam);
+      ROS_DEBUG("Set outputTransforms param to: %d", bParam);
     }
 
     // advertise laser odometry topics
