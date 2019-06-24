@@ -75,7 +75,7 @@ namespace loam
     bool bParam;
     std::string sParam;
 
-    if (privateNode.getParam("scanPeriod", fParam))
+    if (node.getParam("scanPeriod", fParam))
     {
       if (fParam <= 0)
       {
@@ -145,31 +145,31 @@ namespace loam
       }
     }
 
-    if (privateNode.getParam("initFrame", sParam)) {
+    if (node.getParam("initFrame", sParam)) {
       _initFrame = sParam;
       _laserOdometryMsg.header.frame_id = _initFrame;
       _laserOdometryTrans.frame_id_ = _initFrame;
       ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
     }
 
-    if (privateNode.getParam("odomFrame", sParam)) {
+    if (node.getParam("odomFrame", sParam)) {
       _odomFrame = sParam;
       _laserOdometryMsg.child_frame_id  = _odomFrame;
       _laserOdometryTrans.child_frame_id_ = _odomFrame;
       ROS_DEBUG("Set odometry frame name to: %s", sParam.c_str());
     }
 
-    if (privateNode.getParam("loamOdomTopic", sParam)) {
+    if (node.getParam("loamOdomTopic", sParam)) {
       _loamOdomTopic = sParam;
       ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
     }
 
-    if (privateNode.getParam("lidarFrame", sParam)) {
+    if (node.getParam("lidarFrame", sParam)) {
       _lidarFrame = sParam;
       ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
     }
 
-    if (privateNode.getParam("outputTransforms", bParam)) {
+    if (node.getParam("outputTransforms", bParam)) {
       _outputTransforms = bParam;
       ROS_DEBUG("Set outputTransforms param to: %d", bParam);
     }

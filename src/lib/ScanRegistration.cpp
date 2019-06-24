@@ -37,15 +37,16 @@
 
 namespace loam {
 
-bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
-                                   RegistrationParams &config_out) {
+bool ScanRegistration::parseParams(const ros::NodeHandle &node,
+                                   const ros::NodeHandle &privateNode,
+                                       RegistrationParams &config_out) {
   bool success = true;
   int iParam = 0;
   bool bParam;
   std::string sParam;
   float fParam = 0;
 
-  if (nh.getParam("scanPeriod", fParam)) {
+  if (node.getParam("scanPeriod", fParam)) {
     if (fParam <= 0) {
       ROS_ERROR("Invalid scanPeriod parameter: %f (expected > 0)", fParam);
       success = false;
@@ -55,7 +56,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("imuHistorySize", iParam)) {
+  if (privateNode.getParam("imuHistorySize", iParam)) {
     if (iParam < 1) {
       ROS_ERROR("Invalid imuHistorySize parameter: %d (expected >= 1)", iParam);
       success = false;
@@ -65,7 +66,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("featureRegions", iParam)) {
+  if (privateNode.getParam("featureRegions", iParam)) {
     if (iParam < 1) {
       ROS_ERROR("Invalid featureRegions parameter: %d (expected >= 1)", iParam);
       success = false;
@@ -75,18 +76,18 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("curvatureRegion", iParam)) {
+  if (privateNode.getParam("curvatureRegion", iParam)) {
     if (iParam < 1) {
       ROS_ERROR("Invalid curvatureRegion parameter: %d (expected >= 1)",
                 iParam);
       success = false;
     } else {
       config_out.curvatureRegion = iParam;
-      ROS_INFO("Set curvatureRegion: +/- %d", iParam);
+      ROS_DEBUG("Set curvatureRegion: +/- %d", iParam);
     }
   }
 
-  if (nh.getParam("maxCornerSharp", iParam)) {
+  if (privateNode.getParam("maxCornerSharp", iParam)) {
     if (iParam < 1) {
       ROS_ERROR("Invalid maxCornerSharp parameter: %d (expected >= 1)", iParam);
       success = false;
@@ -94,11 +95,11 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       config_out.maxCornerSharp = iParam;
       config_out.maxCornerLessSharp = 10 * iParam;
       ROS_DEBUG("Set maxCornerSharp / less sharp: %d / %d", iParam,
-               config_out.maxCornerLessSharp);
+                config_out.maxCornerLessSharp);
     }
   }
 
-  if (nh.getParam("maxCornerLessSharp", iParam)) {
+  if (privateNode.getParam("maxCornerLessSharp", iParam)) {
     if (iParam < config_out.maxCornerSharp) {
       ROS_ERROR("Invalid maxCornerLessSharp parameter: %d (expected >= %d)",
                 iParam, config_out.maxCornerSharp);
@@ -109,7 +110,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("maxSurfaceFlat", iParam)) {
+  if (privateNode.getParam("maxSurfaceFlat", iParam)) {
     if (iParam < 1) {
       ROS_ERROR("Invalid maxSurfaceFlat parameter: %d (expected >= 1)", iParam);
       success = false;
@@ -119,7 +120,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("surfaceCurvatureThreshold", fParam)) {
+  if (privateNode.getParam("surfaceCurvatureThreshold", fParam)) {
     if (fParam < 0.001) {
       ROS_ERROR(
           "Invalid surfaceCurvatureThreshold parameter: %f (expected >= 0.001)",
@@ -131,7 +132,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("lessFlatFilterSize", fParam)) {
+  if (privateNode.getParam("lessFlatFilterSize", fParam)) {
     if (fParam < 0.001) {
       ROS_ERROR("Invalid lessFlatFilterSize parameter: %f (expected >= 0.001)",
                 fParam);
@@ -142,19 +143,24 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
     }
   }
 
-  if (nh.getParam("lidarFrame", sParam)) {
+  if (node.getParam("lidarFrame", sParam)) {
     _lidarFrame = sParam;
     ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
   }
 
-  if (nh.getParam("imuFrame", sParam)) {
+  if (node.getParam("imuFrame", sParam)) {
     _imuFrame = sParam;
     ROS_DEBUG("Set IMU frame name to: %s", sParam.c_str());
   }
 
-  if (nh.getParam("transformImuData", bParam)) {
+  if (node.getParam("transformImuData", bParam)) {
     _transformIMU = bParam;
-    ROS_DEBUG("Set IMU frame name to: %d", bParam);
+    ROS_DEBUG("Set transformImuData to: %d", bParam);
+  }
+
+  if (node.getParam("imuInputTopic", sParam)) {
+    _imuInputTopic =sParam;
+    ROS_DEBUG("Set IMU input topic name to: %s", sParam.c_str());
   }
 
   // Get transformation to apply to IMU
@@ -179,7 +185,7 @@ bool ScanRegistration::parseParams(const ros::NodeHandle &nh,
       }
       if (counter > 10) {
         ROS_ERROR("Cannot find transform from imu frame to lidar frame. Not "
-                 "transforming data.");
+                  "transforming data.");
         _transformIMU = false;
         transform_found = true;
       }
@@ -195,15 +201,14 @@ bool ScanRegistration::setupROS(ros::NodeHandle &node,
   _transformIMU = false;
   _imuFrame = "/imu";
   _lidarFrame = "/camera";
+  _imuInputTopic = "/imu/data";
 
-  if (!parseParams(privateNode, config_out))
+  if (!parseParams(node, privateNode, config_out))
     return false;
 
   // subscribe to IMU topic
-  std::string imuInputTopic;
-  ros::param::get("imuInputTopic", imuInputTopic);
   _subImu = node.subscribe<sensor_msgs::Imu>(
-      imuInputTopic, 50, &ScanRegistration::handleIMUMessage, this);
+      _imuInputTopic, 50, &ScanRegistration::handleIMUMessage, this);
 
   // advertise scan registration topics
   _pubLaserCloud =

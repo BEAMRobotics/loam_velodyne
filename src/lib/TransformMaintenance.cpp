@@ -56,36 +56,36 @@ bool TransformMaintenance::setup(ros::NodeHandle &node,
   std::string sParam;
   bool bParam;
   std::vector<double> vParam;
-  if (privateNode.getParam("loamOdomTopic", sParam)) {
+  if (node.getParam("loamOdomTopic", sParam)) {
     _loamOdomTopic = sParam;
     ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("mapOdomTopic", sParam)) {
+  if (node.getParam("mapOdomTopic", sParam)) {
     _mapOdomTopic = sParam;
     ROS_DEBUG("Set map odometry topic name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("lidarOdomTopic", sParam)) {
+  if (node.getParam("lidarOdomTopic", sParam)) {
     _lidarOdomTopic = sParam;
     ROS_DEBUG("Set lidar odometry topic name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("initFrame", sParam)) {
+  if (node.getParam("initFrame", sParam)) {
     _initFrame = sParam;
     _laserOdometry2.header.frame_id = _initFrame;
     _laserOdometryTrans2.frame_id_ = _initFrame;
     ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("lidarFrame", sParam)) {
+  if (node.getParam("lidarFrame", sParam)) {
     _lidarFrame = sParam;
     _laserOdometry2.child_frame_id = _lidarFrame;
     _laserOdometryTrans2.child_frame_id_ = _lidarFrame;
     ROS_DEBUG("Set lidar frame name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("lidarOdomCov", vParam)) {
+  if (node.getParam("lidarOdomCov", vParam)) {
     if (vParam.size() == 6) {
       _poseCovariance = vParam;
       ROS_DEBUG("Set lidar odometry covariance diagonals to: [%f, %f, %f, %f, "
@@ -99,7 +99,7 @@ bool TransformMaintenance::setup(ros::NodeHandle &node,
     }
   }
 
-  if (privateNode.getParam("outputTransforms", bParam)) {
+  if (node.getParam("outputTransforms", bParam)) {
     _outputTransforms = bParam;
     ROS_DEBUG("Set outputTransforms param to: %d", bParam);
   }

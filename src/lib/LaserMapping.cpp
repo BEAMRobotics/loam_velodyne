@@ -59,7 +59,7 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
   int iParam;
   bool bParam;
 
-  if (privateNode.getParam("scanPeriod", fParam)) {
+  if (node.getParam("scanPeriod", fParam)) {
     if (fParam <= 0) {
       ROS_ERROR("Invalid scanPeriod parameter: %f (expected > 0)", fParam);
       return false;
@@ -132,36 +132,36 @@ bool LaserMapping::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode) {
     }
   }
 
-  if (privateNode.getParam("mapOdomTopic", sParam)) {
+  if (node.getParam("mapOdomTopic", sParam)) {
     _mapOdomTopic = sParam;
     ROS_DEBUG("Set map odometry topic to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("initFrame", sParam)) {
+  if (node.getParam("initFrame", sParam)) {
     _initFrame = sParam;
     _odomAftMapped.header.frame_id = _initFrame;
     _aftMappedTrans.frame_id_ = _initFrame;
     ROS_DEBUG("Set initial frame name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("mapFrame", sParam)) {
+  if (node.getParam("mapFrame", sParam)) {
     _mapFrame = sParam;
     _odomAftMapped.child_frame_id = _mapFrame;
     _aftMappedTrans.child_frame_id_ = _mapFrame;
     ROS_DEBUG("Set map frame name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("loamOdomTopic", sParam)) {
+  if (node.getParam("loamOdomTopic", sParam)) {
     _loamOdomTopic = sParam;
     ROS_DEBUG("Set loam odometry topic name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("imuInputTopic", sParam)) {
+  if (node.getParam("imuInputTopic", sParam)) {
     _imuInputTopic = sParam;
     ROS_DEBUG("Set IMU input topic name to: %s", sParam.c_str());
   }
 
-  if (privateNode.getParam("outputTransforms", bParam)) {
+  if (node.getParam("outputTransforms", bParam)) {
     _outputTransforms = bParam;
     ROS_DEBUG("Set outputTransforms to: %d", bParam);
   }
