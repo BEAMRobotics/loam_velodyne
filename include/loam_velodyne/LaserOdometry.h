@@ -135,6 +135,7 @@ namespace loam
     bool _newSurfPointsLessFlat;      ///< flag if a new less flat surface cloud has been received
     bool _newLaserCloudFullRes;       ///< flag if a new full resolution cloud has been received
     bool _newImuTrans;                ///< flag if a new IMU transformation information cloud has been received
+    bool _outputTransforms;          //< whether or not to publish transforms to tf
 
     nav_msgs::Odometry _laserOdometryMsg;       ///< laser odometry message
     tf::StampedTransform _laserOdometryTrans;   ///< laser odometry transformation
@@ -151,6 +152,8 @@ namespace loam
     ros::Subscriber _subSurfPointsLessFlat;     ///< less flat surface cloud message subscriber
     ros::Subscriber _subLaserCloudFullRes;      ///< full resolution cloud message subscriber
     ros::Subscriber _subImuTrans;               ///< IMU transformation information message subscriber
+
+    std::string _initFrame, _odomFrame, _loamOdomTopic, _lidarFrame;
   };
 
 } // end namespace loam

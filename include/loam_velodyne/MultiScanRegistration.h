@@ -134,6 +134,7 @@ private:
   MultiScanMapper _scanMapper;  ///< mapper for mapping vertical point angles to scan ring IDs
   std::vector<pcl::PointCloud<pcl::PointXYZI> > _laserCloudScans;
   ros::Subscriber _subLaserCloud;   ///< input cloud message subscriber
+  std::string _pointCloudInputTopic;
 
 };
 

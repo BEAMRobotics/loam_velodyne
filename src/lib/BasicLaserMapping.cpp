@@ -97,6 +97,7 @@ BasicLaserMapping::BasicLaserMapping(const float& scanPeriod, const size_t& maxI
    // setup down size filters
    _downSizeFilterCorner.setLeafSize(0.2, 0.2, 0.2);
    _downSizeFilterSurf.setLeafSize(0.4, 0.4, 0.4);
+   _downSizeFilterMap.setLeafSize(0.02, 0.02, 0.02);
 }
 
 

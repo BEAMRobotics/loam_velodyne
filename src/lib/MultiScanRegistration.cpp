@@ -107,10 +107,13 @@ bool MultiScanRegistration::setupROS(ros::NodeHandle& node, ros::NodeHandle& pri
     }
 
     ROS_INFO("Set  %s  scan mapper.", lidarName.c_str());
-    if (!privateNode.hasParam("scanPeriod")) {
-      config_out.scanPeriod = 0.1;
-      ROS_INFO("Set scanPeriod: %f", config_out.scanPeriod);
+
+    float fParam;
+    if (node.getParam("scanPeriod", fParam)) {
+      config_out.scanPeriod = fParam;
+      ROS_DEBUG("Set scanPeriod: %f", fParam);
     }
+
   } else {
     float vAngleMin, vAngleMax;
     int nScanRings;
@@ -131,11 +134,15 @@ bool MultiScanRegistration::setupROS(ros::NodeHandle& node, ros::NodeHandle& pri
     }
   }
 
+  std::string sParam;
+  if (node.getParam("pointCloudInputTopic", sParam)) {
+    _pointCloudInputTopic = sParam;
+    ROS_DEBUG("Set point cloud input topic name to : %s", sParam.c_str());
+  }
+
   // subscribe to input cloud topic
-  std::string pointCloudInputTopic;
-  ros::param::get("point_cloud_input_topic", pointCloudInputTopic);
   _subLaserCloud = node.subscribe<sensor_msgs::PointCloud2>
-      (pointCloudInputTopic, 2, &MultiScanRegistration::handleCloudMessage, this);
+      (_pointCloudInputTopic, 2, &MultiScanRegistration::handleCloudMessage, this);
 
   return true;
 }

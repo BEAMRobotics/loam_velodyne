@@ -33,71 +33,76 @@
 #ifndef LOAM_SCANREGISTRATION_H
 #define LOAM_SCANREGISTRATION_H
 
-
 #include "common.h"
 
 #include <stdint.h>
 
+#include <geometry_msgs/TransformStamped.h>
 #include <ros/node_handle.h>
 #include <sensor_msgs/Imu.h>
-#include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_listener.h>
 
-#include "RotateIMUData.h"
 #include "BasicScanRegistration.h"
+#include "RotateIMUData.h"
 
-
-namespace loam
-{
-  /** \brief Base class for LOAM scan registration implementations.
+namespace loam {
+/** \brief Base class for LOAM scan registration implementations.
+ *
+ * As there exist various sensor devices, producing differently formatted point
+ * clouds, specific implementations are needed for each group of sensor devices
+ * to achieve an accurate registration. This class provides common
+ * configurations, buffering and processing logic.
+ */
+class ScanRegistration : protected BasicScanRegistration {
+public:
+  /** \brief Setup component.
    *
-   * As there exist various sensor devices, producing differently formatted point clouds,
-   * specific implementations are needed for each group of sensor devices to achieve an accurate registration.
-   * This class provides common configurations, buffering and processing logic.
+   * @param node the ROS node handle
+   * @param privateNode the private ROS node handle
    */
-  class ScanRegistration : protected BasicScanRegistration
-  {
-  public:
+  virtual bool setupROS(ros::NodeHandle &node, ros::NodeHandle &privateNode,
+                        RegistrationParams &config_out);
 
-    /** \brief Setup component.
-     *
-     * @param node the ROS node handle
-     * @param privateNode the private ROS node handle
-     */
-    virtual bool setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
+  /** \brief Handler method for IMU messages.
+   *
+   * @param imuIn the new IMU message
+   */
+  virtual void handleIMUMessage(const sensor_msgs::Imu::ConstPtr &imuIn);
 
-    /** \brief Handler method for IMU messages.
-     *
-     * @param imuIn the new IMU message
-     */
-    virtual void handleIMUMessage(const sensor_msgs::Imu::ConstPtr& imuIn);
+protected:
+  /** \brief Publish the current result via the respective topics. */
+  void publishResult();
 
-  protected:
-    /** \brief Publish the current result via the respective topics. */
-    void publishResult();
+private:
+  /** \brief Parse node parameter.
+   *
+   * @param node the public ROS node handle
+   * @param node the private ROS node handle
+   * @return true, if all specified parameters are valid, false if at least one
+   * specified parameter is invalid
+   */
+  bool parseParams(const ros::NodeHandle &node,
+                   const ros::NodeHandle &privateNode,
+                   RegistrationParams &config_out);
 
-  private:
-
-    /** \brief Parse node parameter.
-    *
-    * @param nh the ROS node handle
-    * @return true, if all specified parameters are valid, false if at least one specified parameter is invalid
-    */
-    bool parseParams(const ros::NodeHandle& nh, RegistrationParams& config_out);
-
-  private:
-    geometry_msgs::TransformStamped _T_lidar_imu; ///< transform from imu to lidar needed to transform imu data
-    bool _transformIMU;
-    ros::Subscriber _subImu;                    ///< IMU message subscriber
-    ros::Publisher _pubLaserCloud;              ///< full resolution cloud message publisher
-    ros::Publisher _pubCornerPointsSharp;       ///< sharp corner cloud message publisher
-    ros::Publisher _pubCornerPointsLessSharp;   ///< less sharp corner cloud message publisher
-    ros::Publisher _pubSurfPointsFlat;          ///< flat surface cloud message publisher
-    ros::Publisher _pubSurfPointsLessFlat;      ///< less flat surface cloud message publisher
-    ros::Publisher _pubImuTrans;                ///< IMU transformation message publisher
-  };
+private:
+  geometry_msgs::TransformStamped
+      _T_lidar_imu; ///< transform from imu to lidar needed to transform imu
+                    ///< data
+  bool _transformIMU;
+  ros::Subscriber _subImu;       ///< IMU message subscriber
+  ros::Publisher _pubLaserCloud; ///< full resolution cloud message publisher
+  ros::Publisher
+      _pubCornerPointsSharp; ///< sharp corner cloud message publisher
+  ros::Publisher
+      _pubCornerPointsLessSharp; ///< less sharp corner cloud message publisher
+  ros::Publisher _pubSurfPointsFlat; ///< flat surface cloud message publisher
+  ros::Publisher
+      _pubSurfPointsLessFlat;  ///< less flat surface cloud message publisher
+  ros::Publisher _pubImuTrans; ///< IMU transformation message publisher
+  std::string _lidarFrame, _imuFrame, _imuInputTopic;
+};
 
 } // end namespace loam
 
-
-#endif //LOAM_SCANREGISTRATION_H
+#endif // LOAM_SCANREGISTRATION_H
