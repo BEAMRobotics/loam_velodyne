@@ -22,7 +22,7 @@ $ source ~/catkin_ws/devel/setup.bash
 ## Running
 
 ```
-roslaunch loam_velodyne loam_velodyne.launch
+roslaunch loam_velodyne ig_loam.launch
 ```
 
 In second terminal play sample velodyne data from [VLP16 rosbag](http://www.frc.ri.cmu.edu/~jizhang03/Datasets/):
